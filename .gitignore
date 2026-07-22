@@ -1,0 +1,8 @@
+build/
+devel/
+logs/
+.catkin_tools/
+.vscode/
+__pycache__/
+*.py[cod]
+*.bag

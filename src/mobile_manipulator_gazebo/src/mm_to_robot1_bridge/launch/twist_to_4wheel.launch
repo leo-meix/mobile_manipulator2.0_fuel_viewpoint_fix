@@ -1,0 +1,12 @@
+<launch>
+  <!-- 你桥接节点的参数（按你cpp里 nh.param 的名字来） -->
+  <node pkg="mm_to_robot1_bridge" type="twist_to_4wheel_bridge" name="twist_to_4wheel_bridge" output="screen">
+    <param name="cmd_timeout" value="0.2" />
+    <param name="wheel_radius" value="0.07" />
+    <param name="lx" value="0.185" />
+    <param name="ly" value="0.185" />
+
+    <param name="arm_publish_rate" value="50.0" />
+    <param name="arm_time_from_start" value="0.01" />
+  </node>
+</launch>

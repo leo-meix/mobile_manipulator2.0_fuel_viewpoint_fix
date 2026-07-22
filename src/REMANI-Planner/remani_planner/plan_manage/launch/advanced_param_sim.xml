@@ -1,0 +1,202 @@
+<launch>
+	<arg name="map_size_x_"/>
+	<arg name="map_size_y_"/>
+	<arg name="map_size_z_"/>
+
+	<arg name="odometry_topic"/>
+	<arg name="joint_state_topic"/>
+	<arg name="gripper_state_topic"/>
+	<arg name="joint_cmd_topic"/>
+	<arg name="gripper_cmd_topic"/>
+	<arg name="camera_pose_topic"/>
+	<arg name="depth_topic"/>
+	<arg name="cloud_topic"/>
+	<arg name="exp_param_file"/>
+
+	<arg name="cx"/>
+	<arg name="cy"/>
+	<arg name="fx"/>
+	<arg name="fy"/>
+	<arg name="manual_mapping_mode" default="false"/>
+  
+  <!-- main node -->
+  	<node pkg="remani_planner" name="remani_planner_node" type="remani_planner_node" output="screen">
+		<rosparam file="$(arg exp_param_file)"/>
+		<rosparam file="$(find remani_planner)/config/mm_param.yaml"/>
+		<rosparam file="$(find remani_planner)/config/remani_planner_param.yaml"/>
+		<param name="map_frame" value="world" type="string"/>
+		<param name="exploration/enable_fuel_frontier_debug" value="true" type="bool"/>
+		<param name="exploration/fuel_frontier_update_rate" value="3.0" type="double"/>
+
+		<remap from="~gripper_cmd" to="$(arg gripper_cmd_topic)"/>
+		<remap from="~gripper_state" to="$(arg gripper_state_topic)"/>
+  
+		<remap from="~odom_world" to="$(arg odometry_topic)"/>
+		<remap from="~joint_state" to="$(arg joint_state_topic)"/>
+		<remap from="~planning/trajectory" to = "planning/trajectory"/>
+		<remap from="~planning/start" to = "planning/start"/>
+		<remap from="~planning/finish" to = "planning/finish"/>
+		<remap from="~planning/data_display" to = "planning/data_display"/>
+
+		<remap from="~grid_map/odom"  to="$(arg odometry_topic)"/>
+		<remap from="~grid_map/cloud" to="$(arg cloud_topic)"/>
+		<remap from="~grid_map/pose"  to = "$(arg camera_pose_topic)"/> 
+		<remap from="~grid_map/depth" to = "$(arg depth_topic)"/>
+		
+			<!-- planning fsm -->
+			<!-- target_type: 1 manual goal, 2 preset waypoints, 3 nearest frontier exploration -->
+			<param name="fsm/target_type"             value="3" type="int"/>
+			<param name="fsm/manual_mapping_mode"     value="$(arg manual_mapping_mode)" type="bool"/>
+			<param name="fsm/thresh_no_replan_meter"  value="2.5" type="double"/>
+			<param name="fsm/fail_safe"               value="false"/>
+		
+		<param name="grid_map/resolution"             value="0.05" /> 
+		<param name="grid_map/map_size_x"             value="$(arg map_size_x_)" /> 
+		<param name="grid_map/map_size_y"             value="$(arg map_size_y_)" /> 
+		<param name="grid_map/map_size_z"             value="$(arg map_size_z_)" /> 
+		<param name="grid_map/local_update_range_x"   value="17" /> 
+		<param name="grid_map/local_update_range_y"   value="17" /> 
+		<param name="grid_map/local_update_range_z"   value="3.0" /> 
+			<param name="grid_map/obstacles_inflation"    value="0.20" /> 
+		<param name="grid_map/local_map_margin"       value="15"/>
+		<param name="grid_map/ground_height"          value="-0.01"/>
+		<param name="grid_map/z_length"               value="0.0"/>
+		<!-- camera parameter -->
+		<param name="grid_map/cx" value="$(arg cx)"/>
+		<param name="grid_map/cy" value="$(arg cy)"/>
+		<param name="grid_map/fx" value="$(arg fx)"/>
+		<param name="grid_map/fy" value="$(arg fy)"/>
+		<!-- depth filter -->
+		<param name="grid_map/use_depth_filter"       value="true"/>
+		<param name="grid_map/depth_filter_tolerance" value="0.15"/>
+		<param name="grid_map/depth_filter_maxdist"   value="5.0"/>
+		<param name="grid_map/depth_filter_mindist"   value="0.5"/>
+		<param name="grid_map/depth_filter_margin"    value="2"/>
+		<param name="grid_map/k_depth_scaling_factor" value="1000.0"/>
+		<param name="grid_map/skip_pixel"             value="1"/>
+		<!-- local fusion -->
+		<param name="grid_map/p_hit"  value="0.65"/>
+		<param name="grid_map/p_miss" value="0.35"/>
+		<param name="grid_map/p_min"  value="0.12"/>
+		<param name="grid_map/p_max"  value="0.90"/>
+		<param name="grid_map/p_occ"  value="0.80"/>
+		<param name="grid_map/min_ray_length" value="0.1"/>
+		<param name="grid_map/max_ray_length" value="4.5"/>
+	
+		<param name="grid_map/virtual_ceil_height"              value="4.0"/>
+		<param name="grid_map/visualization_truncate_height"    value="2.8"/>
+		<param name="grid_map/show_occ_time"                    value="false"/>
+		<param name="grid_map/pose_type"                        value="1"/>  
+		<param name="grid_map/frame_id"                         value="world"/>
+			<param name="grid_map/use_load_map"                     value="false"/>
+			<param name="grid_map/use_global_map"                   value="false"/>
+			<param name="grid_map/cloud_raycast_free"               value="true"/>
+			<param name="grid_map/optimistic"                       value="true" type="bool"/>
+			<param name="grid_map/signed_dist"                      value="false" type="bool"/>
+
+			<!-- frontier extraction -->
+					<param name="frontier/cluster_min_cells"                value="20" type="int"/>
+					<param name="frontier/large_cluster_min_cells"          value="200" type="int"/>
+					<param name="frontier/max_split_depth"                  value="3" type="int"/>
+					<param name="frontier/min_split_extent_cells"           value="20.0" type="double"/>
+					<param name="frontier/min_split_elongation"             value="3.0" type="double"/>
+					<param name="frontier/min_split_child_ratio"            value="0.25" type="double"/>
+				<!-- Raw frontier height range -->
+				<param name="frontier/ground_z_min"                     value="0.35" type="double"/>
+				<param name="frontier/min_z"                            value="0.35" type="double"/>
+				<param name="frontier/max_z"                            value="1.60" type="double"/>
+				<param name="frontier/use_vertical_neighbors"           value="false" type="bool"/>
+				<param name="frontier/reject_inflated_cells"            value="true" type="bool"/>
+				<param name="frontier/min_obstacle_clearance"           value="0.15" type="double"/>
+					<param name="frontier/show_raw_cells"                   value="true" type="bool"/>
+					<param name="frontier/show_clusters"                    value="true" type="bool"/>
+						<param name="frontier/show_boxes"                       value="false" type="bool"/>
+						<param name="frontier/raw_stride"                       value="2" type="int"/>
+						<param name="frontier/max_raw_marker_points"            value="1500" type="int"/>
+						<param name="frontier/frame_id"                         value="world" type="string"/>
+						<param name="frontier_target/show_targets"              value="true" type="bool"/>
+						<param name="frontier_target/show_target_text"          value="true" type="bool"/>
+						<param name="frontier_target/show_top_target"           value="true" type="bool"/>
+						<param name="frontier_target/target_marker_scale"       value="0.18" type="double"/>
+						<param name="frontier_target/text_scale"                value="0.18" type="double"/>
+						<param name="frontier_target/top_target_marker_scale"   value="0.28" type="double"/>
+			<param name="frontier/auto_continue"                    value="true" type="bool"/>
+			<param name="frontier/replan_during_execution"          value="false" type="bool"/>
+			<param name="frontier/replan_period"                    value="1.5" type="double"/>
+			<param name="frontier/min_commit_time"                   value="4.0" type="double"/>
+			<param name="frontier/switch_score_margin"               value="1.5" type="double"/>
+				<param name="frontier/reach_dist"                       value="0.5" type="double"/>
+				<param name="frontier/min_select_dist"                  value="0.20" type="double"/>
+				<param name="frontier/switch_margin"                    value="1.0" type="double"/>
+				<param name="frontier/goal_backoff"                     value="1.0" type="double"/>
+				<param name="frontier/debug_enable"                     value="true" type="bool"/>
+				<param name="frontier/path_check_enable"                value="true" type="bool"/>
+				<param name="frontier/path_check_resolution"            value="0.10" type="double"/>
+				<param name="frontier/path_search_margin"               value="2.0" type="double"/>
+				<param name="frontier/path_max_search_time"             value="0.05" type="double"/>
+				<param name="frontier/path_cost_weight"                 value="1.0" type="double"/>
+				<param name="frontier/path_yaw_weight"                  value="0.5" type="double"/>
+				<param name="frontier/path_yaw_check_weight"            value="0.5" type="double"/>
+					<param name="frontier/path_visible_weight"              value="0.002" type="double"/>
+					<param name="frontier/unknown_gain_weight"              value="0.005" type="double"/>
+					<param name="frontier/arm_motion_weight"                value="0.05" type="double"/>
+					<param name="frontier/failed_goal_timeout"              value="8.0" type="double"/>
+					<param name="frontier/visited_radius"                   value="0.8" type="double"/>
+					<param name="frontier/failed_goal_radius"               value="0.8" type="double"/>
+					<param name="frontier/memory_max_size"                  value="100" type="int"/>
+					<param name="frontier/use_intermediate_goal"            value="true" type="bool"/>
+					<param name="frontier/intermediate_dist"                value="2.0" type="double"/>
+					<param name="frontier_tracker/match_distance"           value="0.8" type="double"/>
+					<param name="frontier_tracker/nearest_cell_distance_voxels" value="2.0" type="double"/>
+					<param name="fuel_viewpoint/r_min"                     value="0.8" type="double"/>
+					<param name="fuel_viewpoint/r_max"                     value="2.4" type="double"/>
+					<param name="fuel_viewpoint/r_num"                     value="5" type="int"/>
+					<param name="fuel_viewpoint/angle_span"                value="6.283185307" type="double"/>
+					<param name="fuel_viewpoint/angle_num"                 value="24" type="int"/>
+					<param name="fuel_viewpoint/max_candidates_per_target" value="120" type="int"/>
+					<param name="fuel_viewpoint/max_valid_per_target"      value="5" type="int"/>
+					<param name="fuel_viewpoint/max_total_candidates"      value="200" type="int"/>
+					<param name="fuel_viewpoint/max_evaluated_per_target"  value="120" type="int"/>
+					<param name="fuel_viewpoint/max_visibility_checks"     value="175" type="int"/>
+					<param name="fuel_viewpoint/max_visibility_checks_per_target" value="24" type="int"/>
+					<param name="fuel_viewpoint/visibility_unknown_blocks_ray" value="true" type="bool"/>
+					<!-- Candidate base-viewpoint safety -->
+					<param name="fuel_viewpoint/base_check_z"              value="0.20" type="double"/>
+					<param name="fuel_viewpoint/base_marker_z"             value="0.03" type="double"/>
+					<param name="fuel_viewpoint/base_footprint_radius"      value="0.32" type="double"/>
+					<param name="fuel_viewpoint/min_obstacle_distance"     value="0.40" type="double"/>
+					<param name="fuel_viewpoint/min_unknown_clearance"     value="0.25" type="double"/>
+					<param name="fuel_viewpoint/collision_safe_margin"     value="false" type="bool"/>
+					<param name="fuel_viewpoint/debug_show_sampled"        value="false" type="bool"/>
+					<param name="fuel_viewpoint/debug_show_rejected"       value="false" type="bool"/>
+					<param name="fuel_viewpoint/debug_max_sampled"         value="50" type="int"/>
+					<param name="fuel_viewpoint/debug_max_rejected"        value="30" type="int"/>
+					<rosparam param="frontier/explore_manipulator_config">[0.0, -135.0, 90.0, -135.0, -90.0, 0.0]</rosparam>
+					<rosparam param="fuel_viewpoint/arm_view_configs">[{id: 0, joints: [0.0, -135.0, 90.0, -115.0, -90.0, 0.0], translation: [0.00, 0.0823, 0.00], rotation_rpy: [0.0, 0.0, 0.0]}, {id: 1, joints: [0.0, -135.0, 90.0, -105.0, -90.0, 0.0], translation: [0.00, 0.0823, 0.00], rotation_rpy: [0.0, 0.0, 0.0]}, {id: 2, joints: [0.0, -135.0, 90.0, -90.0, -90.0, 0.0], translation: [0.00, 0.0823, 0.00], rotation_rpy: [0.0, 0.0, 0.0]}, {id: 3, joints: [0.0, -135.0, 90.0, -180.0, -90.0, 0.0], translation: [0.00, 0.0823, 0.00], rotation_rpy: [0.0, 0.0, 0.0]}, {id: 4, joints: [0.0, -135.0, 90.0, -155.0, -90.0, 0.0], translation: [0.00, 0.0823, 0.00], rotation_rpy: [0.0, 0.0, 0.0]}]</rosparam>
+
+			<!-- sdf map -->
+		<param name="grid_map/local_bound_inflate"              value="0.0"/>
+		<param name="grid_map/show_esdf_time"                   value="false"/>
+		<param name="grid_map/esdf_slice_height"                value="-0.1"/>
+
+		<!-- planner manager -->
+		<param name="manager/control_points_distance"           value="0.4" type="double"/>
+		<param name="manager/polyTraj_piece_length"             value="2.0" type="double"/>
+		<param name="manager/feasibility_tolerance"             value="0.05" type="double"/>
+  	</node>
+
+	<node pkg="mm_controller" name="mm_controller_node" type="mm_controller_node" output="screen">
+		<rosparam file="$(arg exp_param_file)"/>
+		<rosparam file="$(find remani_planner)/config/mm_param.yaml"/>
+		<rosparam file="$(find remani_planner)/config/remani_planner_param.yaml"/>
+  
+		<remap from="~odom" to="$(arg odometry_topic)"/>
+		<remap from="~joint_states" to="$(arg joint_state_topic)"/>
+		<remap from="~joint_cmd" to="$(arg joint_cmd_topic)"/>
+		<remap from="~planning/trajectory" to = "planning/trajectory"/>
+		<remap from="~planning/start" to = "planning/start"/>
+		<remap from="~planning/finish" to = "planning/finish"/>
+			<param name="manual_mapping_mode" value="$(arg manual_mapping_mode)" type="bool"/>
+  	</node>
+
+</launch>

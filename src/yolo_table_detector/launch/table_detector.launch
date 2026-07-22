@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<launch>
+  <!--
+    YOLO Table Detector — real-time table detection in Gazebo.
+
+    Run standalone (assumes Gazebo + robot + camera are already running):
+        roslaunch yolo_table_detector table_detector.launch
+
+    Parameters can be overridden:
+        roslaunch yolo_table_detector table_detector.launch \
+            image_topic:=/robot1_camera/color/image_raw \
+            confidence_threshold:=0.5 \
+            show_display:=true
+  -->
+
+  <arg name="image_topic" default="/robot1_camera/color/image_raw"
+       doc="RGB camera image topic"/>
+  <arg name="weights_path"
+       default="$(find yolo_table_detector)/weights/best.pt"
+       doc="Path to trained YOLO .pt weights"/>
+  <arg name="confidence_threshold" default="0.1"
+       doc="Minimum confidence threshold for YOLO detections"/>
+  <arg name="show_display" default="true"
+       doc="Show OpenCV display window (false for headless)"/>
+  <arg name="publish_annotated" default="true"
+       doc="Publish annotated image to /yolo_table_detector/annotated"/>
+  <arg name="publish_mask" default="true"
+       doc="Publish the combined table mask to /yolo_table_detector/mask"/>
+
+  <node name="yolo_table_detector" pkg="yolo_table_detector"
+        type="yolo_table_detector_node.py" output="screen">
+    <param name="image_topic" value="$(arg image_topic)"/>
+    <param name="weights_path" value="$(arg weights_path)"/>
+    <param name="confidence_threshold" value="$(arg confidence_threshold)"/>
+    <param name="show_display" value="$(arg show_display)"/>
+    <param name="publish_annotated" value="$(arg publish_annotated)"/>
+    <param name="publish_mask" value="$(arg publish_mask)"/>
+  </node>
+
+</launch>

@@ -1,0 +1,81 @@
+<?xml version="1.0" ?>
+<robot name="agv_gazebo" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find agv_description)/urdf/mecanum_wheel_macro.xacro" />
+
+  <xacro:macro name="agv_gazebo" params="prefix1 prefix2">
+
+    <link name="${prefix1}${prefix2}agv_base_footprint"/>
+
+    <joint name="${prefix1}${prefix2}agv_base_joint" type="fixed">
+      <parent link="${prefix1}${prefix2}agv_base_footprint"/>
+      <child link="${prefix1}${prefix2}agv_base_link"/>
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+    </joint>
+
+    <link name="${prefix1}${prefix2}agv_base_link">
+      <visual>
+        <origin xyz="0 0 -0.2" rpy="0 0 0" />
+        <geometry>
+          <mesh filename="package://agv_description/mesh/visual/agv.dae" scale="1 1 1" />
+        </geometry>
+      </visual>
+      <!-- Disable base-ground collision dynamics in kinematic REMANI mode. -->
+      <inertial>
+        <origin xyz="0 0 0" />
+        <mass value="100.0" />
+        <inertia ixx="0.83333" ixy="0.0" ixz="0.0"
+                 iyy="1.9333" iyz="0.0"
+                 izz="2.1667" />
+      </inertial>
+    </link>
+
+    <gazebo reference="${prefix1}${prefix2}agv_base_link">
+      <gravity>false</gravity>
+      <selfCollide>false</selfCollide>
+    </gazebo>
+
+    <xacro:mecanum_wheel name="${prefix1}${prefix2}front_right" side="1"  interface="hardware_interface/VelocityJointInterface"/>
+    <xacro:mecanum_wheel name="${prefix1}${prefix2}front_left"  side="-1" interface="hardware_interface/VelocityJointInterface"/>
+    <xacro:mecanum_wheel name="${prefix1}${prefix2}rear_right"  side="-1" interface="hardware_interface/VelocityJointInterface"/>
+    <xacro:mecanum_wheel name="${prefix1}${prefix2}rear_left"   side="1"  interface="hardware_interface/VelocityJointInterface"/>
+
+    <joint name="${prefix1}${prefix2}front_right_wheel_joint" type="continuous">
+      <origin xyz="0.24 -0.275 -0.1" rpy="0 0 ${pi/2}" />
+      <axis xyz="1 0 0" />
+      <parent link="${prefix1}${prefix2}agv_base_link" />
+      <child link="${prefix1}${prefix2}front_right_wheel_link" />
+    </joint>
+
+    <joint name="${prefix1}${prefix2}front_left_wheel_joint" type="continuous">
+      <origin xyz="0.24 0.275 -0.1" rpy="0 0 ${pi/2}" />
+      <axis xyz="1 0 0" />
+      <parent link="${prefix1}${prefix2}agv_base_link" />
+      <child link="${prefix1}${prefix2}front_left_wheel_link" />
+    </joint>
+
+    <joint name="${prefix1}${prefix2}rear_right_wheel_joint" type="continuous">
+      <origin xyz="-0.24 -0.275 -0.1" rpy="0 0 ${pi/2}" />
+      <axis xyz="1 0 0" />
+      <parent link="${prefix1}${prefix2}agv_base_link" />
+      <child link="${prefix1}${prefix2}rear_right_wheel_link" />
+    </joint>
+
+    <joint name="${prefix1}${prefix2}rear_left_wheel_joint" type="continuous">
+      <origin xyz="-0.24 0.275 -0.1" rpy="0 0 ${pi/2}" />
+      <axis xyz="1 0 0" />
+      <parent link="${prefix1}${prefix2}agv_base_link" />
+      <child link="${prefix1}${prefix2}rear_left_wheel_link" />
+    </joint>
+
+    <gazebo>
+      <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+        <robotNamespace>/${prefix1}</robotNamespace>
+        <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
+        <legacyModeNS>true</legacyModeNS>
+      </plugin>
+    </gazebo>
+
+  </xacro:macro>
+
+</robot>

@@ -1,0 +1,51 @@
+  <launch>
+  <!-- Gazebo exploration stack: planner + controller only. -->
+    <arg name="map_size_x" value="20.0"/>
+    <arg name="map_size_y" value="16.0"/>
+    <arg name="map_size_z" value=" 3.0"/>
+<!--ROS话题名称定义-->
+    <arg name="odom_topic" default="/robot1/robot1_agv_base_link_position" /><!--底盘历程计-->
+    <arg name="joint_state_topic" value="/mm/mani/joint_state" /><!--关节状态-->
+    <arg name="joint_cmd_topic" value="/mm_controller_node/joint_cmd" /><!--关节命令-->
+    <arg name="gripper_cmd_topic" value="/mm_controller_node/gripper_cmd"/><!--加爪命令-->
+    <arg name="gripper_state_topic" value="/mm/mani/gripper_state"/><!--加爪状态-->
+<!--实际参数文件-->
+    <arg name="exp_param_file" default="$(find remani_planner)/config/exp0_param.yaml"/>
+    <arg name="camera_pose_topic" default="/robot1_camera/depth/pose"/>
+    <arg name="depth_topic" default="/robot1_camera/depth/image_raw"/>
+    <arg name="cloud_topic" default="/robot1_camera/depth/color/points"/>
+    <arg name="manual_mapping_mode" default="false"/>
+
+    <!--主算法参数配置-->
+    <include file="$(find remani_planner)/launch/advanced_param_sim.xml">
+    <!--传递地图尺寸-->
+      <arg name="map_size_x_"             value="$(arg map_size_x)"/>
+      <arg name="map_size_y_"             value="$(arg map_size_y)"/>
+      <arg name="map_size_z_"             value="$(arg map_size_z)"/>
+      <arg name="exp_param_file"          value="$(arg exp_param_file)"/>
+      <!-- camera pose: transform of camera frame in the world frame -->
+      <!-- depth topic: depth image, 640x480 by default -->
+      <!-- don't set cloud_topic if you already set these ones! -->
+<!--状态反馈话题-->
+      <arg name="odometry_topic" value="$(arg odom_topic)"/>
+      <arg name="joint_state_topic" value="$(arg joint_state_topic)"/>
+<!--控制命令话题-->
+      <arg name="joint_cmd_topic" value="$(arg joint_cmd_topic)"/>
+      <arg name="gripper_cmd_topic" value="$(arg gripper_cmd_topic)"/>
+      <arg name="gripper_state_topic" value="$(arg gripper_state_topic)"/>
+<!--传感器模拟配置-->
+      <arg name="camera_pose_topic" value="$(arg camera_pose_topic)"/>
+      <arg name="depth_topic" value="$(arg depth_topic)"/>
+      <!-- topic of point cloud measurement, such as from LIDAR  -->
+      <!-- don't set camera pose and depth, if you already set this one! -->
+      <arg name="cloud_topic" value="$(arg cloud_topic)"/>
+      <!-- intrinsic params of the depth camera -->
+<!--深度相机内参（真实相机参数）-->
+      <arg name="cx" value="640.0"/>
+      <arg name="cy" value="360.0"/>
+      <arg name="fx" value="695.9951171875"/>
+      <arg name="fy" value="695.9951171875"/>
+      <arg name="manual_mapping_mode" value="$(arg manual_mapping_mode)"/>
+    </include>
+
+  </launch>

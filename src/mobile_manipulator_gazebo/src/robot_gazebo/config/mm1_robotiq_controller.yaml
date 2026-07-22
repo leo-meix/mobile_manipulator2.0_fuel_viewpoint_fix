@@ -1,0 +1,7 @@
+robot1/gripper_controller:
+  type: position_controllers/JointTrajectoryController
+  joints:
+    - robot1_gripper_finger1_joint
+
+
+  

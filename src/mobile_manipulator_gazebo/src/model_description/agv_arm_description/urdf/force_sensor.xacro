@@ -1,0 +1,28 @@
+<?xml version="1.0" ?>
+<robot name="force_sensor" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="force_sensor" params="prefix">
+
+    <link name="${prefix}force_sensor">
+        <visual>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <geometry>
+            <mesh filename="package://agv_arm_description/meshes/force_sensor.DAE"/>
+        </geometry>
+        </visual>
+        <collision>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <geometry>
+            <mesh filename="package://agv_arm_description/meshes/force_sensor_collision.STL"/>
+        </geometry>
+        </collision>
+    </link>
+
+    <joint name="${prefix}force_sensor_to_tool0" type="fixed">
+        <origin rpy="0 0 0" xyz="0.0 0.0 0.0"/>
+        <parent link="${prefix}tool0"/>
+        <child link="${prefix}force_sensor"/>
+    </joint>
+
+  </xacro:macro>
+</robot>

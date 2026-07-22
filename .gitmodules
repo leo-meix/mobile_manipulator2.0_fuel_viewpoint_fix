@@ -1,0 +1,3 @@
+[submodule "src/REMANI-Planner"]
+	path = src/REMANI-Planner
+	url = git@gitee.com:guoaoshen/path-planning.git

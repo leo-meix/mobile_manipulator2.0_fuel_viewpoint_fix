@@ -1,0 +1,50 @@
+<?xml version="1.0"?>  
+<robot name="multiple_agv_ur5_robot1" xmlns:xacro="http://ros.org/wiki/xacro">  
+    <xacro:arg name="ideal_robot_mode" default="false"/>
+    <xacro:include filename="$(find agv_arm_description)/urdf/agv_ur5.xacro"/>  
+
+    <xacro:macro name="disable_robot_link" params="plugin_name link_name">
+      <gazebo>
+        <plugin name="${plugin_name}" filename="libroboticsgroup_gazebo_disable_link_plugin.so">
+          <link>${link_name}</link>
+        </plugin>
+      </gazebo>
+    </xacro:macro>
+
+<!-- set robot name and joint angle -->
+    <xacro:agv_ur5 prefix1="robot1" prefix2="_"
+                   q1="0.0"
+                   q2="0.0"
+                   q3="0.0"
+                   q4="0.0"
+                   q5="0.0"
+                   q6="0.0" />
+
+    <xacro:if value="$(arg ideal_robot_mode)">
+      <xacro:disable_robot_link plugin_name="disable_robot1_agv_base_link" link_name="robot1_agv_base_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_front_right_wheel_link" link_name="robot1_front_right_wheel_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_front_left_wheel_link" link_name="robot1_front_left_wheel_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_rear_right_wheel_link" link_name="robot1_rear_right_wheel_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_rear_left_wheel_link" link_name="robot1_rear_left_wheel_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_base_link" link_name="robot1_base_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_shoulder_link" link_name="robot1_shoulder_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_upper_arm_link" link_name="robot1_upper_arm_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_forearm_link" link_name="robot1_forearm_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_wrist_1_link" link_name="robot1_wrist_1_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_wrist_2_link" link_name="robot1_wrist_2_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_wrist_3_link" link_name="robot1_wrist_3_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_ee_link" link_name="robot1_ee_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_gripper_base_link" link_name="robot1_gripper_base_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_gripper_finger1_knuckle_link" link_name="robot1_gripper_finger1_knuckle_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_gripper_finger2_knuckle_link" link_name="robot1_gripper_finger2_knuckle_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_gripper_finger1_finger_link" link_name="robot1_gripper_finger1_finger_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_gripper_finger2_finger_link" link_name="robot1_gripper_finger2_finger_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_gripper_finger1_inner_knuckle_link" link_name="robot1_gripper_finger1_inner_knuckle_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_gripper_finger2_inner_knuckle_link" link_name="robot1_gripper_finger2_inner_knuckle_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_gripper_finger1_finger_tip_link" link_name="robot1_gripper_finger1_finger_tip_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_gripper_finger2_finger_tip_link" link_name="robot1_gripper_finger2_finger_tip_link"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_force_sensor_link" link_name="robot1_force_sensor"/>
+      <xacro:disable_robot_link plugin_name="disable_robot1_camera_mount_link" link_name="robot1_camera_mount_link"/>
+    </xacro:if>
+
+</robot>

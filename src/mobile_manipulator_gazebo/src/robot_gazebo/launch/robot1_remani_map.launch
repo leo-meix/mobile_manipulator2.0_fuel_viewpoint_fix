@@ -1,0 +1,101 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <!-- Single supported world for autonomous exploration. -->
+  <arg name="world_name" default="$(find robot_gazebo)/worlds/outdoor.world"/>
+  <arg name="spawn_robot" default="true"/>
+
+  <!-- keep only Gazebo joint_state_controller as the joint state source -->
+  <arg name="enable_joint_state_publisher" default="false"/>
+  <arg name="ideal_robot_mode" default="true"/>
+  <arg name="ideal_base_set_rate" default="30.0"/>
+  <arg name="ideal_base_pose_alpha" default="0.06"/>
+  <arg name="ideal_base_yaw_alpha" default="0.08"/>
+  <arg name="bridge_cmd_timeout" default="0.5"/>
+  <arg name="enable_env_cloud_bridge" default="true"/>
+  <arg name="camera_cloud_topic" default="/robot1_camera/depth/color/points"/>
+  <arg name="env_cloud_topic" default="/gazebo_world/pointcloud"/>
+  <arg name="env_cloud_target_frame" default="world"/>
+  <arg name="camera_depth_topic" default="/robot1_camera/depth/image_raw"/>
+  <arg name="camera_pose_topic" default="/robot1_camera/depth/pose"/>
+  <arg name="camera_depth_frame" default="robot1_camera_depth_optical_frame"/>
+  <arg name="odom_topic" default="/robot1/robot1_agv_base_link_position"/>
+  <arg name="manual_mapping_mode" default="false"/>
+
+  <!-- Table segmentation runs in the same exploration process graph. -->
+  <arg name="enable_yolo" default="true"/>
+  <arg name="yolo_weights" default="$(find yolo_table_detector)/weights/best.pt"/>
+  <arg name="yolo_confidence" default="0.1"/>
+  <arg name="yolo_display" default="false"/>
+
+  <!-- Initial Gazebo arm pose. These are Gazebo/ros_control joint angles in
+       radians, after applying the bridge arm_offset to the REMANI pose
+       [0, -90, 0, -90, -90, 0] deg. -->
+  <arg name="robot1_j1" default="0.0"/>
+  <arg name="robot1_j2" default="0.0"/>
+  <arg name="robot1_j3" default="0.0"/>
+  <arg name="robot1_j4" default="0.0"/>
+  <arg name="robot1_j5" default="-1.57079632679"/>
+  <arg name="robot1_j6" default="0.0"/>
+
+  <arg name="exp_param_file" default="$(find remani_planner)/config/exp0_param.yaml"/>
+
+  <include file="$(find robot_gazebo)/launch/single_mm_ur5.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="spawn_robot" value="$(arg spawn_robot)"/>
+    <arg name="enable_joint_state_publisher" value="$(arg enable_joint_state_publisher)"/>
+    <arg name="ideal_robot_mode" value="$(arg ideal_robot_mode)"/>
+    <arg name="base_set_rate" value="$(arg ideal_base_set_rate)"/>
+    <arg name="base_pose_alpha" value="$(arg ideal_base_pose_alpha)"/>
+    <arg name="base_yaw_alpha" value="$(arg ideal_base_yaw_alpha)"/>
+    <arg name="bridge_cmd_timeout" value="$(arg bridge_cmd_timeout)"/>
+    <arg name="enable_env_cloud_bridge" value="$(arg enable_env_cloud_bridge)"/>
+    <arg name="camera_cloud_topic" value="$(arg camera_cloud_topic)"/>
+    <arg name="env_cloud_topic" value="$(arg env_cloud_topic)"/>
+    <arg name="env_cloud_target_frame" value="$(arg env_cloud_target_frame)"/>
+    <arg name="odom_topic" value="$(arg odom_topic)"/>
+    <arg name="robot1_j1" value="$(arg robot1_j1)"/>
+    <arg name="robot1_j2" value="$(arg robot1_j2)"/>
+    <arg name="robot1_j3" value="$(arg robot1_j3)"/>
+    <arg name="robot1_j4" value="$(arg robot1_j4)"/>
+    <arg name="robot1_j5" value="$(arg robot1_j5)"/>
+    <arg name="robot1_j6" value="$(arg robot1_j6)"/>
+  </include>
+
+  <node pkg="mm_to_robot1_bridge"
+        type="depth_image_to_pose_bridge"
+        name="depth_image_to_pose_bridge"
+        output="screen">
+    <param name="depth_topic" value="$(arg camera_depth_topic)" />
+    <param name="pose_topic" value="$(arg camera_pose_topic)" />
+    <param name="target_frame" value="$(arg env_cloud_target_frame)" />
+    <param name="source_frame" value="$(arg camera_depth_frame)" />
+    <param name="tf_lookup_timeout" value="0.20" />
+    <param name="queue_size" value="10" />
+  </node>
+
+  <node pkg="rviz"
+        type="rviz"
+        name="rviz"
+        args="-d $(find robot_gazebo)/config/mobile.rviz"
+        required="false" />
+
+  <include file="$(find remani_planner)/launch/run_in_sim.launch">
+    <arg name="odom_topic" value="$(arg odom_topic)"/>
+    <arg name="camera_pose_topic" value="$(arg camera_pose_topic)"/>
+    <arg name="depth_topic" value="$(arg camera_depth_topic)"/>
+    <arg name="cloud_topic" value="$(arg env_cloud_topic)"/>
+    <arg name="exp_param_file" value="$(arg exp_param_file)"/>
+    <arg name="manual_mapping_mode" value="$(arg manual_mapping_mode)"/>
+  </include>
+
+  <include file="$(find yolo_table_detector)/launch/table_detector.launch"
+           if="$(arg enable_yolo)">
+    <arg name="image_topic" value="/robot1_camera/color/image_raw"/>
+    <arg name="weights_path" value="$(arg yolo_weights)"/>
+    <arg name="confidence_threshold" value="$(arg yolo_confidence)"/>
+    <arg name="show_display" value="$(arg yolo_display)"/>
+  </include>
+
+</launch>

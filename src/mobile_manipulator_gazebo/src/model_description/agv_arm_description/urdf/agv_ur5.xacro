@@ -1,0 +1,32 @@
+<?xml version="1.0" ?>
+<robot name="agv_ur5" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find agv_description)/urdf/agv_gazebo.xacro" />
+  <xacro:include filename="$(find ur_robot)/urdf/ur5.urdf.xacro"/>
+  <xacro:include filename="$(find robotiq_85_description)/urdf/robotiq_85_gripper.urdf.xacro" />
+  <xacro:include filename="$(find agv_arm_description)/urdf/force_sensor.xacro" />
+
+
+  <xacro:macro name="agv_ur5" params="prefix1 prefix2 q1 q2 q3 q4 q5 q6">
+
+    <xacro:agv_gazebo prefix1="${prefix1}" prefix2="${prefix2}"/>
+    <xacro:robotiq_85_gripper prefix="${prefix1}${prefix2}"/>
+    <xacro:force_sensor prefix="${prefix1}${prefix2}"/>
+    <xacro:ur5_robot  prefix="${prefix1}${prefix2}" joint_limited="true" 
+                          q1="${q1}"
+                          q2="${q2}"
+                          q3="${q3}"
+                          q4="${q4}"
+                          q5="${q5}"
+                          q6="${q6}" />
+
+    <joint name="${prefix1}${prefix2}ur5_to_agv" type="fixed">
+      <parent link="${prefix1}${prefix2}agv_base_link"/>
+      <child link="${prefix1}${prefix2}base_link"/>
+      <origin xyz="0.1395 0 0.1965" rpy="0 0 0"/>
+    </joint>
+
+
+  </xacro:macro>
+
+</robot>

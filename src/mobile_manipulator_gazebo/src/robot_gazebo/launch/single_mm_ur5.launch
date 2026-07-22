@@ -1,0 +1,161 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <arg name="world_name" default="$(find robot_gazebo)/worlds/outdoor.world"/>
+  <arg name="spawn_robot" default="true"/>
+
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="debug" value="false" />
+    <arg name="gui" value="true" />
+    <arg name="paused" value="false"/>
+    <arg name="use_sim_time" value="true"/>
+    <arg name="headless" value="false"/>
+    <arg name="verbose" value="false" />
+  </include>
+
+  <arg name="robot1_x" default=" -3.0"/>
+  <arg name="robot1_y" default=" -0.0"/>
+  <arg name="robot1_z" default=" 0.2"/>
+  <arg name="robot1_yaw" default=" 0.0"/>
+  <!-- Gazebo joint angles corresponding to the default REMANI arm pose
+       [0, -90, 0, -90, -90, 0] deg after applying the bridge arm_offset
+       [0, +pi/2, 0, +pi/2, 0, 0]. Keep these values synchronized with
+       fsm/init_state (or frontier/explore_manipulator_config). -->
+  <arg name="robot1_j1" default="0.0"/>
+  <arg name="robot1_j2" default="0.0"/>
+  <arg name="robot1_j3" default="0.0"/>
+  <arg name="robot1_j4" default="0.0"/>
+  <arg name="robot1_j5" default="-1.57079632679"/>
+  <arg name="robot1_j6" default="0.0"/>
+
+  <arg name="enable_env_cloud_bridge" default="true"/>
+  <arg name="camera_cloud_topic" default="/robot1_camera/depth/color/points"/>
+  <arg name="env_cloud_topic" default="/gazebo_world/pointcloud"/>
+  <arg name="env_cloud_target_frame" default="world"/>
+
+  <arg name="enable_odom_tf_bridge" default="true"/>
+  <arg name="odom_topic" default="/robot1/robot1_agv_base_link_position"/>
+  <arg name="world_frame" default="world"/>
+  <arg name="base_footprint_frame" default="robot1_agv_base_footprint"/>
+
+  <!-- keep set_model_state base control path by default -->
+  <arg name="enable_wheel_velocity_controllers" default="false"/>
+  <arg name="enable_joint_state_publisher" default="false"/>
+  <arg name="ideal_robot_mode" default="false"/>
+  <arg name="bridge_cmd_timeout" default="0.5"/>
+  <arg name="base_set_rate" default="30.0"/>
+  <arg name="base_pose_alpha" default="0.20"/>
+  <arg name="base_yaw_alpha" default="0.20"/>
+  <arg name="arm_publish_rate" default="30.0"/>
+  <arg name="arm_time_from_start" default="0.05"/>
+
+  <rosparam command="load" file="$(find robot_gazebo)/config/mm1_pos_controller.yaml" />
+  <rosparam command="load" file="$(find robot_gazebo)/config/mm1_robotiq_controller.yaml" />
+
+  <group ns="robot1">
+    <param name="robot_description"
+           command="$(find xacro)/xacro $(find robot_gazebo)/urdf/multiple_agv_ur5_robot1.xacro --inorder ideal_robot_mode:=$(arg ideal_robot_mode)" />
+
+    <node name="joint_state_publisher"
+          pkg="joint_state_publisher"
+          type="joint_state_publisher"
+          if="$(arg enable_joint_state_publisher)" />
+
+    <node name="robot_state_publisher"
+          pkg="robot_state_publisher"
+          type="robot_state_publisher"
+          respawn="false"
+          output="screen" />
+
+    <node name="controller_spawner_state"
+          pkg="controller_manager"
+          type="spawner"
+          args="--namespace /robot1 --no-timeout joint_state_controller" />
+
+    <node name="controller_spawner_wheels"
+          pkg="controller_manager"
+          type="spawner"
+          if="$(arg enable_wheel_velocity_controllers)"
+          args="--namespace /robot1 --no-timeout front_right_controller front_left_controller rear_right_controller rear_left_controller" />
+
+    <node name="controller_spawner_arm" pkg="controller_manager" type="spawner"
+          args="--namespace /robot1 --no-timeout joint_controller"/>
+
+    <node name="controller_spawner_gripper" pkg="controller_manager" type="spawner"
+          args="--namespace /robot1 --no-timeout gripper_controller"/>
+
+    <node name="robot_spawn" pkg="gazebo_ros" type="spawn_model" output="screen"
+          if="$(arg spawn_robot)"
+          args="-urdf -param robot_description
+                -x $(arg robot1_x)
+                -y $(arg robot1_y)
+                -z $(arg robot1_z)
+                -Y $(arg robot1_yaw)
+                -J robot1_shoulder_pan_joint $(arg robot1_j1)
+                -J robot1_shoulder_lift_joint $(arg robot1_j2)
+                -J robot1_elbow_joint $(arg robot1_j3)
+                -J robot1_wrist_1_joint $(arg robot1_j4)
+                -J robot1_wrist_2_joint $(arg robot1_j5)
+                -J robot1_wrist_3_joint $(arg robot1_j6)
+                -model robot1" />
+
+    <node pkg="mm_to_robot1_bridge"
+          type="twist_to_4wheel_bridge"
+          name="twist_to_4wheel_bridge"
+          output="screen">
+      <param name="cmd_timeout" value="$(arg bridge_cmd_timeout)" />
+      <param name="wheel_radius" value="0.070" />
+      <param name="lx" value="0.185" />
+      <param name="ly" value="0.185" />
+      <param name="initial_x" value="$(arg robot1_x)" />
+      <param name="initial_y" value="$(arg robot1_y)" />
+      <param name="initial_yaw" value="$(arg robot1_yaw)" />
+      <param name="gazebo_z" value="$(arg robot1_z)" />
+      <param name="arm_publish_rate" value="$(arg arm_publish_rate)" />
+      <param name="arm_time_from_start" value="$(arg arm_time_from_start)" />
+      <rosparam param="arm_index_map">[0, 1, 2, 3, 4, 5]</rosparam>
+      <rosparam param="arm_sign">[1, 1, 1, 1, 1, 1]</rosparam>
+      <rosparam param="arm_offset">[0.0, 1.57079632679, 0.0, 1.57079632679, 0.0, 0.0]</rosparam>
+
+      <!-- set_model_state smoothing params -->
+      <param name="base_set_rate" value="$(arg base_set_rate)" />
+      <param name="base_pose_alpha" value="$(arg base_pose_alpha)" />
+      <param name="base_yaw_alpha" value="$(arg base_yaw_alpha)" />
+      <param name="base_apply_twist" value="false" />
+      <param name="base_xy_deadband" value="0.0001" />
+      <param name="base_yaw_deadband" value="0.0001" />
+
+      <remap from="cmd_vel" to="/mm_controller_node/car_cmd" />
+    </node>
+
+    <node pkg="mm_to_robot1_bridge"
+          type="odom_to_tf_bridge"
+          name="odom_to_tf_bridge"
+          output="screen"
+          if="$(arg enable_odom_tf_bridge)">
+      <param name="odom_topic" value="$(arg odom_topic)" />
+      <param name="world_frame" value="$(arg world_frame)" />
+      <param name="base_footprint_frame" value="$(arg base_footprint_frame)" />
+      <param name="footprint_z" value="0.0" />
+      <param name="use_odom_stamp" value="true" />
+      <param name="queue_size" value="20" />
+    </node>
+
+    <node pkg="mm_to_robot1_bridge"
+          type="cloud_to_world_bridge"
+          name="cloud_to_world_bridge"
+          output="screen"
+          if="$(arg enable_env_cloud_bridge)">
+      <param name="input_cloud_topic" value="$(arg camera_cloud_topic)" />
+      <param name="output_cloud_topic" value="$(arg env_cloud_topic)" />
+      <param name="target_frame" value="$(arg env_cloud_target_frame)" />
+      <param name="tf_lookup_timeout" value="0.20" />
+      <param name="queue_size" value="3" />
+      <param name="warn_on_exact_fallback" value="false" />
+    </node>
+
+  </group>
+
+</launch>
