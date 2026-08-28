@@ -10,6 +10,10 @@ namespace remani_planner
   void REMANIReplanFSM::init(ros::NodeHandle &nh)
   {
     exec_state_ = FSM_EXEC_STATE::INIT;
+    // Exploration must remain idle until RViz publishes a 2D Nav Goal.
+    // Leaving this flag uninitialized can make the FSM start autonomously
+    // depending on the allocator's previous memory contents.
+    have_trigger_ = false;
     have_target_ = false;
     have_odom_ = false;
     have_joint_state_ = false;

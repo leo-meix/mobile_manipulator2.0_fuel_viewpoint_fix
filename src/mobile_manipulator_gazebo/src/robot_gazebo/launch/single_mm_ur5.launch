@@ -4,12 +4,13 @@
 
   <arg name="world_name" default="$(find robot_gazebo)/worlds/outdoor.world"/>
   <arg name="spawn_robot" default="true"/>
+  <arg name="paused" default="false"/>
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(arg world_name)"/>
     <arg name="debug" value="false" />
     <arg name="gui" value="true" />
-    <arg name="paused" value="false"/>
+    <arg name="paused" value="$(arg paused)"/>
     <arg name="use_sim_time" value="true"/>
     <arg name="headless" value="false"/>
     <arg name="verbose" value="false" />
@@ -24,9 +25,9 @@
        [0, +pi/2, 0, +pi/2, 0, 0]. Keep these values synchronized with
        fsm/init_state (or frontier/explore_manipulator_config). -->
   <arg name="robot1_j1" default="0.0"/>
-  <arg name="robot1_j2" default="0.0"/>
-  <arg name="robot1_j3" default="0.0"/>
-  <arg name="robot1_j4" default="0.0"/>
+  <arg name="robot1_j2" default="-0.78539816339"/>
+  <arg name="robot1_j3" default="1.57079632679"/>
+  <arg name="robot1_j4" default="-0.78539816339"/>
   <arg name="robot1_j5" default="-1.57079632679"/>
   <arg name="robot1_j6" default="0.0"/>
 

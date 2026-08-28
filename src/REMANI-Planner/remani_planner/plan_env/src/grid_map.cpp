@@ -12,7 +12,7 @@ void GridMap::initMap(ros::NodeHandle &nh)
 
   /* get parameter */
   double x_size, y_size, z_size;
-  node_.param("grid_map/resolution", mp_.resolution_, -1.0);
+  node_.param("grid_map/resolution", mp_.resolution_, -1.0);//每个栅格（体素）的物理大小
   node_.param("grid_map/map_size_x", x_size, -1.0);
   node_.param("grid_map/map_size_y", y_size, -1.0);
   node_.param("grid_map/map_size_z", z_size, -1.0);
@@ -75,7 +75,7 @@ void GridMap::initMap(ros::NodeHandle &nh)
   else mp_.local_bound_inflate_ = 0.0;
 
   mp_.resolution_inv_ = 1 / mp_.resolution_;
-  mp_.map_origin_ = Eigen::Vector3d(-x_size / 2.0, -y_size / 2.0, mp_.ground_height_);
+  mp_.map_origin_ = Eigen::Vector3d(-x_size / 2.0, -y_size / 2.0, mp_.ground_height_);//地图坐标系设定
   mp_.map_size_ = Eigen::Vector3d(x_size, y_size, z_size);
 
   mp_.prob_hit_log_ = logit(mp_.p_hit_);
@@ -97,7 +97,7 @@ void GridMap::initMap(ros::NodeHandle &nh)
   mp_.map_min_boundary_ = mp_.map_origin_;
   mp_.map_max_boundary_ = mp_.map_origin_ + mp_.map_size_;
 
-  if(mp_.virtual_ceil_height_ >= z_size + mp_.ground_height_ )
+  if(mp_.virtual_ceil_height_ >= z_size + mp_.ground_height_ )//虚拟天花板处理
   {
     mp_.virtual_ceil_height_ = z_size + mp_.ground_height_ - mp_.resolution_;
   }
@@ -123,7 +123,7 @@ void GridMap::initMap(ros::NodeHandle &nh)
   md_.flag_traverse_ = vector<int>(buffer_size, -1);
 
   md_.occupancy_buffer_neg_ = vector<char>(buffer_size, 0);
-  md_.distance_buffer_ = vector<double>(buffer_size, 10000);//10000
+  md_.distance_buffer_ = vector<double>(buffer_size, 10000);
   md_.distance_buffer_neg_ = vector<double>(buffer_size, 10000);
   md_.distance_buffer_all_ = vector<double>(buffer_size, 10000);
   md_.tmp_buffer1_ = vector<double>(buffer_size, 0);
@@ -131,7 +131,7 @@ void GridMap::initMap(ros::NodeHandle &nh)
 
   md_.raycast_num_ = 0;
 
-  const int skip_pixel = std::max(1, mp_.skip_pixel_);
+  const int skip_pixel = std::max(1, mp_.skip_pixel_);//
   const size_t default_proj_points =
       std::max<size_t>(21000, static_cast<size_t>(640 * 480 / (skip_pixel * skip_pixel)));
   md_.proj_points_.resize(default_proj_points);
@@ -338,7 +338,7 @@ int GridMap::setCacheOccupancy(Eigen::Vector3d pos, int occ)
 }
 
 void GridMap::projectDepthImage()
-{
+{//深度图像到3D世界点的投影
   // md_.proj_points_.clear();
   md_.proj_points_cnt = 0;
 
@@ -356,32 +356,31 @@ void GridMap::projectDepthImage()
   Eigen::Matrix3d camera_r = md_.camera_r_m_;
 
   if (!mp_.use_depth_filter_)
-  {
-    for (int v = 0; v < rows; v += skip_pix)
+  {//简单模式无滤波
+    for (int v = 0; v < rows; v += skip_pix)//遍历所有行，步长skip_pix，降采样
     {
       row_ptr = md_.depth_image_.ptr<uint16_t>(v);
 
-      for (int u = 0; u < cols; u += skip_pix)
+      for (int u = 0; u < cols; u += skip_pix)//遍历所有列
       {
-
+      //error:循环 u 每次增加 skip_pix，但指针只移动1步。第1次循环：读取 (0,0)第2次循环（u=skip_pix）：指针从 (0,1) 开始，读取的是 (0,1)，而不是期望的 (0, skip_pix)
         Eigen::Vector3d proj_pt;
         depth = (*row_ptr++) / mp_.k_depth_scaling_factor_;
         proj_pt(0) = (u - mp_.cx_) * depth / mp_.fx_;
         proj_pt(1) = (v - mp_.cy_) * depth / mp_.fy_;
         proj_pt(2) = depth;
 
-        proj_pt = camera_r * proj_pt + md_.camera_pos_;
+        proj_pt = camera_r * proj_pt + md_.camera_pos_;//投影点从相机坐标系转换到世界坐标系
 
         if (u == 320 && v == 240)
-          std::cout << "depth: " << depth << std::endl;
+          std::cout << "depth: " << depth << std::endl;//打印中心点深度值，由于
         md_.proj_points_[md_.proj_points_cnt++] = proj_pt;
       }
     }
   }
   /* use depth filter */
   else
-  {
-
+  {//滤波模式
     if (!md_.has_first_depth_)
       md_.has_first_depth_ = true;
     else
@@ -466,7 +465,7 @@ void GridMap::projectDepthImage()
 }
 
 void GridMap::raycastProcess()
-{
+{//对投影点进行射线投影，更新占据栅格
   // if (md_.proj_points_.size() == 0)
   if (md_.proj_points_cnt == 0)
     return;
@@ -741,7 +740,7 @@ void GridMap::visCallback(const ros::TimerEvent & /*event*/)
 }
 
 void GridMap::updateOccupancyCallback(const ros::TimerEvent & /*event*/)
-{
+{//基于深度相机的3D占用网格
   if (md_.last_occ_update_time_.toSec() < 1.0)
     md_.last_occ_update_time_ = ros::Time::now();
 
@@ -765,12 +764,12 @@ void GridMap::updateOccupancyCallback(const ros::TimerEvent & /*event*/)
   /* --- stage 1: depth preprocessing --- */
   t_stage = ros::Time::now();
   if (!mp_.use_load_map_)
-    projectDepthImage();
+    projectDepthImage();//第一步：将深度图像投影到世界坐标系中，得到点云
   double depth_time = (ros::Time::now() - t_stage).toSec();
 
   /* --- stage 2: raycast --- */
   t_stage = ros::Time::now();
-  raycastProcess();
+  raycastProcess();//第二步：对投影点进行射线投射，更新占用网格
   double raycast_time = (ros::Time::now() - t_stage).toSec();
 
   /* --- stage 3: inflate map --- */
@@ -778,7 +777,7 @@ void GridMap::updateOccupancyCallback(const ros::TimerEvent & /*event*/)
   if (md_.local_updated_)
   {
     t_stage = ros::Time::now();
-    clearAndInflateLocalMap();
+    clearAndInflateLocalMap();//第三步：对占用网格进行膨胀处理，考虑机器人尺寸和安全距离
     inflate_time = (ros::Time::now() - t_stage).toSec();
   }
 
@@ -849,7 +848,7 @@ void GridMap::depthPoseCallback(const sensor_msgs::ImageConstPtr &img,
                                 const geometry_msgs::PoseStampedConstPtr &pose)
 {
   /* --- profiling: sensor delay --- */
-  ros::Time cb_now = ros::Time::now();
+  ros::Time cb_now = ros::Time::now();//性能监控
   double sensor_delay = (cb_now - img->header.stamp).toSec();
   static ros::Time last_cb_time;
   double cb_period = last_cb_time.isValid() ? (cb_now - last_cb_time).toSec() : 0.0;
@@ -858,7 +857,7 @@ void GridMap::depthPoseCallback(const sensor_msgs::ImageConstPtr &img,
                     cb_now.toSec(), img->header.stamp.toSec(), sensor_delay * 1000.0, cb_period * 1000.0);
 
   /* get depth image */
-  cv_bridge::CvImagePtr cv_ptr;
+  cv_bridge::CvImagePtr cv_ptr;//深度图格式转化
   cv_ptr = cv_bridge::toCvCopy(img, img->encoding);
 
   if (img->encoding == sensor_msgs::image_encodings::TYPE_32FC1)

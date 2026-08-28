@@ -81,6 +81,9 @@
         args="-d $(find robot_gazebo)/config/mobile.rviz"
         required="false" />
 
+  <!-- In nearest-frontier mode exploration is started by RViz's
+       "2D Nav Goal" tool (publishes /move_base_simple/goal). -->
+
   <include file="$(find remani_planner)/launch/run_in_sim.launch">
     <arg name="odom_topic" value="$(arg odom_topic)"/>
     <arg name="camera_pose_topic" value="$(arg camera_pose_topic)"/>
