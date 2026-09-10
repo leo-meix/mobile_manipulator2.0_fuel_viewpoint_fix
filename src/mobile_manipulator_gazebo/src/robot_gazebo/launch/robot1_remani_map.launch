@@ -3,7 +3,7 @@
 <launch>
 
   <!-- Single supported world for autonomous exploration. -->
-  <arg name="world_name" default="$(find robot_gazebo)/worlds/outdoor.world"/>
+  <arg name="world_name" default="$(find robot_gazebo)/worlds/outdoor1.world"/>
   <arg name="spawn_robot" default="true"/>
 
   <!-- keep only Gazebo joint_state_controller as the joint state source -->
@@ -21,7 +21,7 @@
   <arg name="camera_pose_topic" default="/robot1_camera/depth/pose"/>
   <arg name="camera_depth_frame" default="robot1_camera_depth_optical_frame"/>
   <arg name="odom_topic" default="/robot1/robot1_agv_base_link_position"/>
-  <arg name="manual_mapping_mode" default="false"/>
+  <arg name="manual_mapping_mode" default="true"/>
 
   <!-- Table segmentation runs in the same exploration process graph. -->
   <arg name="enable_yolo" default="true"/>
