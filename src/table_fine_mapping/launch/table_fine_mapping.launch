@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="color_topic" default="/robot1_camera/color/image_raw"/>
+  <arg name="depth_topic" default="/robot1_camera/depth/image_raw"/>
+  <arg name="camera_info_topic" default="/robot1_camera/depth/camera_info"/>
+  <arg name="mask_topic" default="/yolo_table_detector/mask"/>
+  <arg name="odom_topic" default="/robot1/robot1_agv_base_link_position"/>
+  <arg name="config" default="$(find table_fine_mapping)/config/fine_mapping.yaml"/>
+
+  <node pkg="table_fine_mapping"
+        type="table_fine_mapper_node.py"
+        name="table_fine_mapper"
+        output="screen">
+    <rosparam command="load" file="$(arg config)"/>
+    <param name="color_topic" value="$(arg color_topic)"/>
+    <param name="depth_topic" value="$(arg depth_topic)"/>
+    <param name="camera_info_topic" value="$(arg camera_info_topic)"/>
+    <param name="mask_topic" value="$(arg mask_topic)"/>
+    <param name="odom_topic" value="$(arg odom_topic)"/>
+  </node>
+</launch>
+

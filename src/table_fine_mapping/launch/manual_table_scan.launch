@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Independent validation stack: no REMANI planner/controller is started. -->
+  <arg name="world_name" default="$(find robot_gazebo)/worlds/outdoor1.world"/>
+  <arg name="spawn_robot" default="true"/>
+  <arg name="enable_rviz" default="true"/>
+  <arg name="enable_yolo" default="true"/>
+  <arg name="yolo_weights" default="$(find yolo_table_detector)/weights/best.pt"/>
+  <arg name="yolo_confidence" default="0.10"/>
+  <arg name="yolo_display" default="false"/>
+
+  <include file="$(find robot_gazebo)/launch/single_mm_ur5.launch">
+    <arg name="world_name" value="$(arg world_name)"/>
+    <arg name="spawn_robot" value="$(arg spawn_robot)"/>
+    <arg name="ideal_robot_mode" value="true"/>
+    <arg name="enable_wheel_velocity_controllers" value="false"/>
+    <arg name="enable_env_cloud_bridge" value="false"/>
+    <arg name="bridge_cmd_timeout" value="0.5"/>
+    <arg name="base_set_rate" value="30.0"/>
+    <arg name="base_pose_alpha" value="0.12"/>
+    <arg name="base_yaw_alpha" value="0.15"/>
+    <!-- A useful fixed arm pose for first-pass manual scanning. -->
+    <arg name="robot1_j1" value="0.0"/>
+    <arg name="robot1_j2" value="0.0"/>
+    <arg name="robot1_j3" value="0.0"/>
+    <arg name="robot1_j4" value="0.0"/>
+    <arg name="robot1_j5" value="0.0"/>
+    <arg name="robot1_j6" value="0.0"/>
+  </include>
+
+  <include file="$(find yolo_table_detector)/launch/table_detector.launch"
+           if="$(arg enable_yolo)">
+    <arg name="image_topic" value="/robot1_camera/color/image_raw"/>
+    <arg name="weights_path" value="$(arg yolo_weights)"/>
+    <arg name="confidence_threshold" value="$(arg yolo_confidence)"/>
+    <arg name="show_display" value="$(arg yolo_display)"/>
+  </include>
+
+  <include file="$(find table_fine_mapping)/launch/table_fine_mapping.launch"/>
+
+  <node pkg="rviz" type="rviz" name="rviz"
+        args="-d $(find robot_gazebo)/config/mobile.rviz"
+        if="$(arg enable_rviz)" required="false"/>
+</launch>

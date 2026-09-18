@@ -1,0 +1,37 @@
+world_frame: world
+camera_frame: robot1_camera_depth_optical_frame
+
+  # RGB-D and YOLO-mask synchronization.
+sync_queue_size: 40
+sync_slop: 0.08
+tf_timeout: 0.10
+
+  # Tabletop localization from the table segmentation mask.
+localization_rate: 5.0
+min_mask_pixels: 1200
+max_plane_points: 12000
+ransac_iterations: 100
+plane_distance_threshold: 0.018
+max_table_tilt_deg: 18.0
+min_plane_inliers: 350
+min_table_extent: 0.30
+stable_frames: 5
+stable_center_tolerance: 0.12
+roi_smoothing_alpha: 0.35
+
+  # The table mask locates the support surface. The larger 3-D ROI keeps the
+  # table legs and every object above the tabletop, even if YOLO did not label it.
+roi_padding_xy: 0.18
+roi_below_table: 0.85
+roi_above_table: 0.65
+
+  # Local color TSDF. 8 mm resolves cups/bottles in the Gazebo D435 model.
+voxel_length: 0.008
+sdf_trunc: 0.032
+depth_min: 0.25
+depth_max: 2.50
+integration_rate: 4.0
+publish_rate: 0.5
+min_roi_depth_pixels: 1000
+
+output_directory: /tmp/table_fine_maps
